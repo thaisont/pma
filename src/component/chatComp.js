@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ChatComp = ({ day }) => {
+const ChatComp = ({ day, inputRef }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -10,7 +10,35 @@ const ChatComp = ({ day }) => {
         if (input.trim()) {
             setMessages([...messages, input]);
             setInput('');
-            setLoading(true); 
+            setLoading(true); // Set loading to true when sending a message
+
+            // Simulate sending a message and getting a response
+            fetch('https://hackathonaistu9861472187.openai.azure.com/openai/deployments/my-first-hackathon-gpt-4/chat/completions?api-version=2024-02-15-preview/', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "response": "response to AI",
+                    "counter": 0,
+                    "day": day
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    setMessages(prevMessages => [...prevMessages, data.response]);
+                    setLoading(false); // Set loading to false after receiving the response
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    setLoading(false); // Set loading to false in case of error
+                });
         }
     };
 
@@ -26,14 +54,14 @@ const ChatComp = ({ day }) => {
 
         // Fetch new data for the new day
         setLoading(true); // Set loading to true when starting the fetch
-        fetch('https://mywebsite.example/endpoint/', {
+        fetch('https://hackathonaistu9861472187.openai.azure.com/openai/deployments/my-first-hackathon-gpt-4/chat/completions?api-version=2024-02-15-preview', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "response": "How are you",
+                "response": "response to AI",
                 "counter": 0,
                 "day": day
             })
@@ -45,13 +73,12 @@ const ChatComp = ({ day }) => {
                 return response.json();
             })
             .then(data => {
-                console.log('Success:', data);
-               
-                setLoading(false); // Set loading to false when data is received
+                setMessages([data.response]);
+                setLoading(false); // Set loading to false after receiving the response
             })
             .catch(error => {
                 console.error('There was a problem with the fetch operation:', error);
-                setLoading(false); // Set loading to false in case of an error
+                setLoading(false); // Set loading to false in case of error
             });
 
     }, [day]);
@@ -62,6 +89,12 @@ const ChatComp = ({ day }) => {
         }
     }, [messages]);
 
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.focus(); // Focus the input element when the component mounts
+        }
+    }, [inputRef]);
+
     return (
         <div className="flex flex-col absolute bottom-0 right-0 left-0">
             <div className={`flex-grow p-4 max-w-md ml-auto ${messages.length === 0 ? 'hidden' : 'flex flex-col-reverse'}`}>
@@ -71,11 +104,11 @@ const ChatComp = ({ day }) => {
                             {message}
                         </div>
                     ))}
-                    {/* {loading && (
+                    {loading && (
                         <div className="p-2 bg-gray-100 rounded self-end mb-2">
                             Loading...
                         </div>
-                    )} */}
+                    )}
                     <div ref={messagesEndRef} />
                 </div>
             </div>
@@ -88,6 +121,7 @@ const ChatComp = ({ day }) => {
                         onKeyPress={handleKeyPress}
                         className="flex-grow p-2 border rounded"
                         placeholder="Type your message..."
+                        ref={inputRef}
                     />
                     <button
                         onClick={handleSend}
