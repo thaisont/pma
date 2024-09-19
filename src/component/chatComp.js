@@ -1,27 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const ChatComp = ({ day, inputRef }) => {
+const ChatComp = ({ day, inputRef, setCounter, counter }) => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef(null);
 
     const handleSend = () => {
+
+    
         if (input.trim()) {
             setMessages([...messages, input]);
             setInput('');
             setLoading(true); // Set loading to true when sending a message
 
             // Simulate sending a message and getting a response
-            fetch('https://hackathonaistu9861472187.openai.azure.com/openai/deployments/my-first-hackathon-gpt-4/chat/completions?api-version=2024-02-15-preview/', {
+            fetch('https://hackathon.mesh-uat.ucl.ac.uk/pma/v0.2/chatai/', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    "response": "response to AI",
-                    "counter": 0,
+                    "response": "",
+                    "counter": counter,
                     "day": day
                 })
             })
@@ -34,11 +36,18 @@ const ChatComp = ({ day, inputRef }) => {
                 .then(data => {
                     setMessages(prevMessages => [...prevMessages, data.response]);
                     setLoading(false); // Set loading to false after receiving the response
+                    
+                    
                 })
                 .catch(error => {
                     console.error('There was a problem with the fetch operation:', error);
                     setLoading(false); // Set loading to false in case of error
+                    setCounter(prevCounter => prevCounter + 1); 
+
                 });
+                // setState(function(prevCount) {
+                //     return (prevCount + 1);
+                // })
         }
     };
 
@@ -54,15 +63,15 @@ const ChatComp = ({ day, inputRef }) => {
 
         // Fetch new data for the new day
         setLoading(true); // Set loading to true when starting the fetch
-        fetch('https://hackathonaistu9861472187.openai.azure.com/openai/deployments/my-first-hackathon-gpt-4/chat/completions?api-version=2024-02-15-preview', {
+        fetch('https://hackathon.mesh-uat.ucl.ac.uk/pma/v0.2/chatai/', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "response": "response to AI",
-                "counter": 0,
+                "response": "`Good afternoon",
+                "counter": counter,
                 "day": day
             })
         })
@@ -75,13 +84,15 @@ const ChatComp = ({ day, inputRef }) => {
             .then(data => {
                 setMessages([data.response]);
                 setLoading(false); // Set loading to false after receiving the response
+                setCounter(prevCounter => prevCounter + 1); 
             })
             .catch(error => {
                 console.error('There was a problem with the fetch operation:', error);
                 setLoading(false); // Set loading to false in case of error
+               
             });
 
-    }, [day]);
+    }, [day, counter]);
 
     useEffect(() => {
         if (messagesEndRef.current) {
